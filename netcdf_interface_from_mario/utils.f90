@@ -37,7 +37,6 @@ module utils
         
         ! Static (per year or greater) variables
         integer, allocatable, dimension(:)   :: mask  !< 2D mask  
-        integer :: t !< current time step
         integer :: nloop !< number of loops 
         type(state_class) :: state !< state object
         type(forc_class) :: forc !< forcing object
@@ -49,10 +48,83 @@ module utils
       implicit none
       character(len=*), intent(in) :: domname !< domain name
       type(smb_class), intent(in out) :: dom  !< domain object
-      integer :: nx, ny, nloop
-      character(len=256) :: surface_physics_nml
+      integer :: nx, ny, nt, nloop
+      character(len=256) :: surface_physics_nml, forc_file
+      double precision, allocatable, dimension(:,:) :: sf, rf, sp, lwd, swd,&
+            wind, tt, qq, rhoa
 
-      end subroutine
+! hard-coded numbers
+      surface_physics_nml = 'semic.nml'
+      forc_file = 'forcing.nc'
+      nx = 32
+      ny = 17
+      nt = 335
+
+      dom%grid%G%nx = nx
+      dom%grid%G%ny = ny
+
+      dom%surface%par%name     = trim(domname)
+      dom%surface%par%nx       = nx*ny
+      call surface_alloc(dom%surface%now,nx*ny)
+
+      ! initialise model variables
+      dom%surface%now%hsnow = 1.0
+      dom%surface%now%hice  = 0.0
+      dom%surface%now%alb = 0.8
+      dom%surface%now%tsurf = 260.0
+      dom%surface%now%alb_snow = 0.8
+
+      dom%surface%now%mask = 2.0 ! all points treated as ice point (0/1/2 = ocean/land/ice)
+
+      ! read model parameters from namelist file
+      dom%surface_physics_nml = surface_physics_nml
+      call surface_physics_par_load(dom%surface%par,dom%surface_physics_nml)
+
+      dom%driver%ntime = nt
+
+      ! check if boundary fields are provided (e.g., albedo as read from ECHAM6)
+      call surface_boundary_define(dom%surface%bnd,dom%surface%par%boundary)
+
+      allocate(tt(nx*ny,nt))
+      allocate(sf(nx*ny,nt))
+      allocate(rf(nx*ny,nt))
+      allocate(sp(nx*ny,nt))
+      allocate(lwd(nx*ny,nt))
+      allocate(swd(nx*ny,nt))
+      allocate(wind(nx*ny,nt))
+      allocate(qq(nx*ny,nt))
+      allocate(rhoa(nx*ny,nt))
+
+      call read_forcing(trim(forc_file),nx,ny,nt,wind,tt,sf,rf,qq,rhoa,sp,lwd,swd)
+      dom%forc%sf   = sf/1.e3 ! kg/m2/s -> m/s
+      dom%forc%rf   = rf/1.e3 ! kg/m2/s -> m/s
+      dom%forc%sp   = sp      ! hPa -> Pa
+      dom%forc%lwd  = lwd
+      dom%forc%swd  = swd
+      dom%forc%wind = wind
+      dom%forc%rhoa = rhoa
+      dom%forc%tt   = tt
+      dom%forc%qq   = qq       ! g/kg -> kg/kg
+
+      end subroutine init
+
+      subroutine update(dom,day)
+        type(smb_class), intent(in out) :: dom !< domain object
+        integer, intent(in) :: day  !< current day
+
+        dom%surface%now%t2m  = dom%forc%tt(:,day)
+        dom%surface%now%swd  = dom%forc%swd(:,day)
+        dom%surface%now%lwd  = dom%forc%lwd(:,day)
+        dom%surface%now%wind = dom%forc%wind(:,day)
+        dom%surface%now%qq   = dom%forc%qq(:,day)
+        dom%surface%now%sp   = dom%forc%sp(:,day)
+        dom%surface%now%rhoa = dom%forc%rhoa(:,day)
+        dom%surface%now%sf   = dom%forc%sf(:,day)
+        dom%surface%now%rf   = dom%forc%rf(:,day)
+
+        call surface_energy_and_mass_balance(dom%surface%now,dom%surface%par,dom%surface%bnd,day,-1)
+
+      end subroutine update
 
       subroutine read_forcing(fnm_in,nx,ny,nt,wind,tt,sf,rf,qq,rhoa,sp,lwd,swd)
 
