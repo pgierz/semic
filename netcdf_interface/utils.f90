@@ -47,21 +47,21 @@ module utils
       subroutine init(dom,domname)
       implicit none
       character(len=*), intent(in) :: domname !< domain name
+      character(len=10) :: forc_file !< name of file is allocated
+      character(len=7) :: mask_file !< name the mask file
       type(smb_class), intent(in out) :: dom  !< domain object
       integer :: nx, ny, nt, nloop
-      character(len=256) :: surface_physics_nml, forc_file
+      character(len=256) :: surface_physics_nml
       double precision, allocatable, dimension(:,:) :: sf, rf, sp, lwd, swd,&
             wind, tt, qq, rhoa
 
 ! hard-coded numbers
       surface_physics_nml = 'semic.nml'
       forc_file = 'forcing.nc'
-      nx = 32
-      ny = 17
-      nt = 335
-
-      dom%grid%G%nx = nx
-      dom%grid%G%ny = ny
+      mask_file = "glac.nc"
+      nx = 192
+      ny = 96
+      nt = 365
 
       dom%surface%par%name     = trim(domname)
       dom%surface%par%nx       = nx*ny
@@ -74,13 +74,13 @@ module utils
       dom%surface%now%tsurf = 260.0
       dom%surface%now%alb_snow = 0.8
 
-      dom%surface%now%mask = 2.0 ! all points treated as ice point (0/1/2 = ocean/land/ice)
+      call read_mask(trim(mask_file), nx, ny, dom%surface%now%mask)
+      !dom%surface%now%mask = mask ! all points read from glac mask. 
 
       ! read model parameters from namelist file
       dom%surface_physics_nml = surface_physics_nml
       call surface_physics_par_load(dom%surface%par,dom%surface_physics_nml)
 
-      dom%driver%ntime = nt
 
       ! check if boundary fields are provided (e.g., albedo as read from ECHAM6)
       call surface_boundary_define(dom%surface%bnd,dom%surface%par%boundary)
@@ -95,7 +95,10 @@ module utils
       allocate(qq(nx*ny,nt))
       allocate(rhoa(nx*ny,nt))
 
+      !print *,"PG Forcing name is:",forc_file
+
       call read_forcing(trim(forc_file),nx,ny,nt,wind,tt,sf,rf,qq,rhoa,sp,lwd,swd)
+      
       dom%forc%sf   = sf/1.e3 ! kg/m2/s -> m/s
       dom%forc%rf   = rf/1.e3 ! kg/m2/s -> m/s
       dom%forc%sp   = sp      ! hPa -> Pa
@@ -126,12 +129,28 @@ module utils
 
       end subroutine update
 
-      subroutine read_forcing(fnm_in,nx,ny,nt,wind,tt,sf,rf,qq,rhoa,sp,lwd,swd)
+      subroutine read_mask(mnm_in, nx, ny, mask)
 
+        integer, intent(in) :: nx
+        integer, intent(in) :: ny
+        character(len=7), intent(in) :: mnm_in !< GLAC file
+
+        integer, allocatable, dimension(:,:) :: tmp
+        integer, dimension(nx*ny), intent(out) :: mask
+
+        allocate(tmp(ny,ny))
+        call nc_read(mnm_in,"glac", tmp)
+        mask = reshape(tmp, shape(mask))
+        deallocate(tmp)
+
+      end subroutine read_mask
+
+      subroutine read_forcing(fnm_in,nx,ny,nt,wind,tt,sf,rf,qq,rhoa,sp,lwd,swd)
+          
           integer, intent(in) :: nx !< x dimension
           integer, intent(in) :: ny !< y dimension
           integer, intent(in) :: nt !< time dimension
-          character(len=256), intent(in) :: fnm_in !< ECHAM6 file
+          character(len=10), intent(in) :: fnm_in !< ECHAM6 file
 
           double precision, allocatable, dimension(:,:,:)   :: tmp
           double precision, dimension(nx*ny,nt), intent(out) :: sf !< snow fall
@@ -144,7 +163,7 @@ module utils
           double precision, dimension(nx*ny,nt), intent(out) :: qq !< specific humidity
           double precision, dimension(nx*ny,nt), intent(out) :: rhoa !< air density
           allocate(tmp(nx,ny,nt))
-
+          !print *,"PG: Start reading of ", fnm_in
           ! Read input data (forcing)
           call nc_read(fnm_in,"aprs",tmp)
           sf = reshape(tmp,shape(sf))

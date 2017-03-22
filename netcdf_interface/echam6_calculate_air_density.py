@@ -34,7 +34,7 @@ if __name__ == "__main__":
     fin = netcdf.netcdf_file(args.ifile, "r")
     os.system("cp "+args.ifile+" "+args.ofile)
     fout = netcdf.netcdf_file(args.ofile, "a")
-    rho_file = fout.createVariable("rho", "f", fin.variables["temp2"].dimensions)
+    rho_file = fout.createVariable("rhoa", "f", fin.variables["temp2"].dimensions)
     pressure = fin.variables["aps"].data.squeeze()
     temperature = fin.variables["temp2"].data.squeeze()
     relative_humidity = fin.variables["rhumidity"].data[:, -1, :, :].squeeze()

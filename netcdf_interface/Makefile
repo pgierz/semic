@@ -44,7 +44,7 @@ SRCS = external/ncio-1.1/ncio.f90 \
 $(OBJ_DIR)/%.o : $(SRC_DIR)/%.f90
 	$(MPIFC) $(FFLAGS) -c $< -o $@ -I$(OBJ_DIR) $(FLAGS) $(INCLUDES)
 
-$(semic_bin) : $(SRCS:%.f90=$(OBJ_DIR)/%.o)
+$(semic_bin) : $(SRCS:%.f90=$(OBJ_DIR)/%.o) $(OBJ_DIR)/main.o
 	$(FC) $(FFLAGS) $(INCLUDES) -o ../bin/$@ $^ $(LDFLAGS) $(NCFLAGS)
 
 semic : make_dirs externals $(semic_bin)
@@ -61,3 +61,5 @@ externals:
 clean:
 	rm -rf *.mod *.so *.o $(OBJ_DIR) 
 	$(MAKE) -C $(SRC_DIR)/external/ncio-1.1 clean
+test:
+	../bin/semic.x
