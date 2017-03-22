@@ -1,5 +1,0 @@
-09adf20b94ee712d4f989f005a28970e07088307,DELETE,regular-file,echam6_output/EXAMPLE_echam6_echam_1850.nc,423862240,
-a27cd1eced56b48ed50e433a157d0ede77943ae7,DELETE,regular-file,netcdf_interface_from_mario/external/ncio-1.1/extra/out_ncio2.nc,5644600,
-357dfeb7c59ce16521b3d0d7d91a74a9f6fc1fbd,DELETE,regular-file,netcdf_interface_from_mario/external/ncio-1.1/extra/topo.20km.nc,517856,
-f0b14c0c62bb4dff3c3354a02e756b9e1fcd4797,DELETE,regular-file,netcdf_interface_from_mario/external/ncio-1.1/out_ncio.nc,15668,
-aaf7b930cb1aa718c4921c662d4609141cd7d863,DELETE,regular-file,netcdf_interface_from_mario/external/ncio-1.1/timing/pres_temp_4D.nc,2784,
