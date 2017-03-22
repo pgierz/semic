@@ -47,7 +47,8 @@ module utils
       subroutine init(dom,domname)
       implicit none
       character(len=*), intent(in) :: domname !< domain name
-      character(len=10) :: forc_file !< name of file is allocated, fuck you
+      character(len=10) :: forc_file !< name of file is allocated
+      character(len=7) :: mask_file !< name the mask file
       type(smb_class), intent(in out) :: dom  !< domain object
       integer :: nx, ny, nt, nloop
       character(len=256) :: surface_physics_nml
@@ -57,6 +58,7 @@ module utils
 ! hard-coded numbers
       surface_physics_nml = 'semic.nml'
       forc_file = 'forcing.nc'
+      mask_file = "glac.nc"
       nx = 192
       ny = 96
       nt = 365
@@ -72,7 +74,8 @@ module utils
       dom%surface%now%tsurf = 260.0
       dom%surface%now%alb_snow = 0.8
 
-      dom%surface%now%mask = 2.0 ! all points treated as ice point (0/1/2 = ocean/land/ice)
+      call read_mask(trim(mask_file), nx, ny, dom%surface%now%mask)
+      !dom%surface%now%mask = mask ! all points read from glac mask. 
 
       ! read model parameters from namelist file
       dom%surface_physics_nml = surface_physics_nml
@@ -125,6 +128,22 @@ module utils
         call surface_energy_and_mass_balance(dom%surface%now,dom%surface%par,dom%surface%bnd,day,-1)
 
       end subroutine update
+
+      subroutine read_mask(mnm_in, nx, ny, mask)
+
+        integer, intent(in) :: nx
+        integer, intent(in) :: ny
+        character(len=7), intent(in) :: mnm_in !< GLAC file
+
+        integer, allocatable, dimension(:,:) :: tmp
+        integer, dimension(nx*ny), intent(out) :: mask
+
+        allocate(tmp(ny,ny))
+        call nc_read(mnm_in,"glac", tmp)
+        mask = reshape(tmp, shape(mask))
+        deallocate(tmp)
+
+      end subroutine read_mask
 
       subroutine read_forcing(fnm_in,nx,ny,nt,wind,tt,sf,rf,qq,rhoa,sp,lwd,swd)
           
