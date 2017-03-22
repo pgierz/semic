@@ -138,7 +138,7 @@ module utils
         integer, allocatable, dimension(:,:) :: tmp
         integer, dimension(nx*ny), intent(out) :: mask
 
-        allocate(tmp(ny,ny))
+        allocate(tmp(nx,ny))
         call nc_read(mnm_in,"glac", tmp)
         mask = reshape(tmp, shape(mask))
         deallocate(tmp)
