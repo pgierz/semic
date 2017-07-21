@@ -67,8 +67,8 @@ program main
   dimids =  (/ x_dimid, y_dimid, t_dimid /)
 
   ! Define the variable. The type of the variable in this case is
-  ! NF90_INT (4-byte integer).
-  call check( nf90_def_var(ncid, "semic_surface_mass_balance", NF90_INT, dimids, varid) )
+  ! NF90_FLOAT (float).
+  call check( nf90_def_var(ncid, "semic_surface_mass_balance", NF90_FLOAT, dimids, varid) )
 
   ! End define mode. This tells netCDF we are done defining metadata.
   call check( nf90_enddef(ncid) )

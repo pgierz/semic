@@ -255,7 +255,7 @@ contains
             !> 3. Calculate "cold" content
             ! watch the sign
             qcold = dmax1(0.0_dp,abs(below)*par%ceff/par%tstic)
-        else where
+        elsewhere
             qmelt = 0.0_dp
             qcold = 0.0_dp
         end where
@@ -314,7 +314,7 @@ contains
 
         where (now%mask == 0)
             now%hsnow = 0.0_dp
-        else where
+        elsewhere
             !> 9. Update snow height
             now%hsnow = dmax1(0.0_dp, now%hsnow + now%smb_snow*par%tstic)
         end where

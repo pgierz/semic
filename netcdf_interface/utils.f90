@@ -177,9 +177,11 @@ module utils
           rf = reshape(tmp,shape(rf))
           call nc_read(fnm_in,"aps",tmp)
           sp = reshape(tmp,shape(sp))
-          call nc_read(fnm_in,"trads",tmp)
+          call nc_read(fnm_in,"total_lw_down",tmp)
           lwd = reshape(tmp,shape(lwd))
-          call nc_read(fnm_in,"rhoa",tmp)
+          call nc_read(fnm_in,"total_sw_down",tmp)
+          swd = reshape(tmp,shape(swd))
+          call nc_read(fnm_in,"rhoam1",tmp)
           rhoa = reshape(tmp,shape(rhoa))
           deallocate(tmp)
 

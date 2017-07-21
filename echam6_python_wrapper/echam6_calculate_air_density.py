@@ -37,7 +37,7 @@ if __name__ == "__main__":
     rho_file = fout.createVariable("rho", "f", fin.variables["temp2"].dimensions)
     pressure = fin.variables["aps"].data.squeeze()
     temperature = fin.variables["temp2"].data.squeeze()
-    relative_humidity = fin.variables["rhumidity"].data[:, -1, :, :].squeeze()
+    relative_humidity = fin.variables["rhumidity"].data.squeeze()
     # PG: Get the relative humidity of the BOTTOM layer (last). This might need to change!!
     rho = calculate_density(pressure, temperature, relative_humidity)
     rho_file[:] = rho
